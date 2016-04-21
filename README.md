@@ -21,6 +21,7 @@ var verifier = require('gamecenter-identity-verifier');
 var identity = {
   publicKeyUrl: 'https://valid.apple.com/public/timeout.cer',
   timestamp: 1460981421303,
+  signature: 'PoDwf39DCN464B49jJCU0d9Y0J',
   salt: 'saltST==',
   playerId: 'G:1111111',
   bundleId: 'com.valid.app'
