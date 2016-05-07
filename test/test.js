@@ -14,8 +14,11 @@ function convertTimestampToBigEndian(timestamp) {
   var buffer = new Buffer(8);
   buffer.fill(0);
 
-  buffer.writeUInt32BE(parseInt(timestamp / 0xffffffff, 10), 0); // jshint ignore:line
-  buffer.writeUInt32BE(parseInt(timestamp & 0xffffffff, 10), 4); // jshint ignore:line
+  var high = ~~(timestamp / 0xffffffff); // jshint ignore:line
+  var low = timestamp % (0xffffffff + 0x1); // jshint ignore:line
+
+  buffer.writeUInt32BE(parseInt(high, 10), 0);
+  buffer.writeUInt32BE(parseInt(low, 10), 4);
 
   return buffer;
 }
@@ -76,6 +79,24 @@ describe('verifying gameCenter identity', function () {
     var testToken = {
       publicKeyUrl: 'https://valid.apple.com/public/public.cer',
       timestamp: 1460981421303,
+      salt: 'saltST==',
+      playerId: 'G:1111111',
+      bundleId: 'com.valid.app'
+    };
+    testToken.signature = calculateSignature(testToken);
+
+    verifier.verify(testToken, function (error, token) {
+      assert.equal(_.isError(error), false);
+      assert.equal(token.playerId, testToken.playerId);
+      done();
+    });
+  });
+
+  it('should succeed to verify identity when most significant (left-most) bit of timestamp high and low bit block is 1',
+  function (done) {
+    var testToken = {
+      publicKeyUrl: 'https://valid.apple.com/public/public.cer',
+      timestamp: 1462525134342,
       salt: 'saltST==',
       playerId: 'G:1111111',
       bundleId: 'com.valid.app'
