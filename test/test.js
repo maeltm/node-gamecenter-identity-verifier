@@ -92,7 +92,9 @@ describe('verifying gameCenter identity', function () {
     });
   });
 
-  it('should succeed to verify identity when most significant (left-most) bit of timestamp high and low bit block is 1',
+  /*jshint multistr: true */
+  it('should succeed to verify identity when most significant (left-most) bit of \
+timestamp high and low bit block is 1',
   function (done) {
     var testToken = {
       publicKeyUrl: 'https://valid.apple.com/public/public.cer',
