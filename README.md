@@ -64,6 +64,7 @@ The following third-party libraries are used by this module:
 
 ## Release History
 
+* 0.1.1 Fix bug in convert method for timestamp to UInt64BE
 * 0.1.0 Initial release
 
 [travisimg]: https://travis-ci.org/maeltm/node-gamecenter-identity-verifier.svg?branch=master
