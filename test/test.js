@@ -1,12 +1,17 @@
+/*
+global toString
+ */
 'use strict';
 
-var _ = require('underscore');
 var assert = require('assert');
 var crypto = require('crypto');
 var fs = require('fs');
-var request = require('request');
-var sinon = require('sinon');
 var verifier = require('../lib/main');
+var nock = require('nock');
+
+function isError(error) {
+  return toString.call(error) === '[object Error]';
+}
 
 /* jslint bitwise:true */
 function convertTimestampToBigEndian(timestamp) {
@@ -37,21 +42,21 @@ function calculateSignature(payload) {
 }
 
 describe('verifying gameCenter identity', function () {
-  before(function (done) {
+  beforeEach(function (done) {
     var testPublicKey = fs.readFileSync('./test/fixtures/public.der');
-    sinon
-      .stub(request, 'get', function (options, callback) {
-        if (options.uri.indexOf('timeout') !== -1) {
-          callback(new Error('timeout'), { statusCode: 404, headers: {} }, null);
-        } else {
-          callback(null, { statusCode: 200, headers: {} }, testPublicKey);
-        }
+    nock('https://valid.apple.com')
+      .get('/public/timeout.cer')
+      .replyWithError(new Error('timeout'));
+    
+    nock('https://valid.apple.com')
+      .get('/public/public.cer')
+      .reply(function() {
+        return testPublicKey;
       });
     done();
   });
 
   after(function (done) {
-    request.get.restore();
     done();
   });
 
@@ -67,7 +72,7 @@ describe('verifying gameCenter identity', function () {
     testToken.signature = calculateSignature(testToken);
 
     verifier.verify(testToken, function (error, token) {
-      assert.equal(_.isError(error), true);
+      assert.equal(isError(error), true);
       assert.equal(error.message, 'timeout');
       assert.equal(token, null);
       done();
@@ -86,7 +91,7 @@ describe('verifying gameCenter identity', function () {
     testToken.signature = calculateSignature(testToken);
 
     verifier.verify(testToken, function (error, token) {
-      assert.equal(_.isError(error), false);
+      assert.equal(isError(error), false);
       assert.equal(token.playerId, testToken.playerId);
       done();
     });
@@ -106,7 +111,7 @@ timestamp high and low bit block is 1',
     testToken.signature = calculateSignature(testToken);
 
     verifier.verify(testToken, function (error, token) {
-      assert.equal(_.isError(error), false);
+      assert.equal(isError(error), false);
       assert.equal(token.playerId, testToken.playerId);
       done();
     });
@@ -124,7 +129,7 @@ timestamp high and low bit block is 1',
     testToken.signature = calculateSignature(testToken);
 
     verifier.verify(testToken, function (error, token) {
-      assert.equal(_.isError(error), true);
+      assert.equal(isError(error), true);
       assert.equal(error.message, 'Invalid publicKeyUrl');
       assert.equal(token, null);
       done();
@@ -143,7 +148,7 @@ timestamp high and low bit block is 1',
     testToken.signature = calculateSignature(testToken);
 
     verifier.verify(testToken, function (error, token) {
-      assert.equal(_.isError(error), true);
+      assert.equal(isError(error), true);
       assert.equal(error.message, 'Invalid publicKeyUrl');
       assert.equal(token, null);
       done();
@@ -163,7 +168,7 @@ timestamp high and low bit block is 1',
     testToken.salt = 'NOsalt==';
 
     verifier.verify(testToken, function (error, token) {
-      assert.equal(_.isError(error), true);
+      assert.equal(isError(error), true);
       assert.equal(error.message, 'Invalid Signature');
       assert.equal(token, null);
       done();
