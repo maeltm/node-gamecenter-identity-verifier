@@ -50,13 +50,6 @@ npm prepare
 In lieu of a formal styleguide, take care to maintain the existing coding style.
 Add unit tests for any new or changed functionality. Lint and test your code.
 
-## Third-party libraries
-
-The following third-party libraries are used by this module:
-
-* request: https://github.com/request/request - to get google's oauth2 federated signon certs.
-* underscore: http://underscorejs.org
-
 ## Inspired by
 
 * apple's api document - https://developer.apple.com/library/ios/documentation/GameKit/Reference/GKLocalPlayer_Ref/index.html#//apple_ref/occ/instm/GKLocalPlayer/generateIdentityVerificationSignatureWithCompletionHandler
