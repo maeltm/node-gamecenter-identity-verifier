@@ -20,7 +20,7 @@ var testToken = {
   bundleId: 'cloud.xtralife.gamecenterauth'
 };
 
-describe.only('caching test', function () {
+describe('caching test', function () {
   it('should be slow for first check',
     function (done) {
       verifier.verify(testToken, function (error) {
