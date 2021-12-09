@@ -1,5 +1,4 @@
 # node-gamecenter-identity-verifier
-[![Build Status][travisimg]][travis]
 
 This is library to validate a apple's gamecenter identity of localplayer for consuming it in [node.js][node] backend server.
 
