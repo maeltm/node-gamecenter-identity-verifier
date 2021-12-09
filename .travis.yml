@@ -1,13 +1,12 @@
 sudo: false
 language: node_js
 node_js:
-  - "0.12"
-  - "4"
+  - "14"
+  - "16"
   - "stable"
 install:
   - "npm install"
 script:
-  - "npm run lint"
   - "npm test"
-after_success:
-  - "npm run coveralls"
+#after_success:
+#  - "npm run coveralls"
