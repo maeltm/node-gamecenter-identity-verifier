@@ -9,32 +9,12 @@ var fs = require('fs');
 var verifier = require('../lib/main');
 var nock = require('nock');
 
-function isError(error) {
-  return toString.call(error) === '[object Error]';
-}
-
-/* jslint bitwise:true */
-function convertTimestampToBigEndian(timestamp) {
-  // The timestamp parameter in Big-Endian UInt-64 format
-  var buffer = new Buffer(8);
-  buffer.fill(0);
-
-  var high = ~~(timestamp / 0xffffffff); // jshint ignore:line
-  var low = timestamp % (0xffffffff + 0x1); // jshint ignore:line
-
-  buffer.writeUInt32BE(parseInt(high, 10), 0);
-  buffer.writeUInt32BE(parseInt(low, 10), 4);
-
-  return buffer;
-}
-/* jslint bitwise:false */
-
 function calculateSignature(payload) {
   var privateKey = fs.readFileSync('./test/fixtures/private.pem', 'utf-8');
   var signer = crypto.createSign('sha256');
   signer.update(payload.playerId, 'utf8');
   signer.update(payload.bundleId, 'utf8');
-  signer.update(convertTimestampToBigEndian(payload.timestamp));
+  signer.update(verifier.convertTimestampToBigEndian(payload.timestamp));
   signer.update(payload.salt, 'base64');
 
   var signature = signer.sign(privateKey, 'base64');
@@ -42,42 +22,33 @@ function calculateSignature(payload) {
 }
 
 describe('verifying gameCenter identity', function () {
-  beforeEach(function (done) {
-    var testPublicKey = fs.readFileSync('./test/fixtures/public.der');
-    nock('https://valid.apple.com')
-      .get('/public/timeout.cer')
-      .replyWithError(new Error('timeout'));
-    
+
+  beforeEach(function () {
+
     nock('https://valid.apple.com')
       .get('/public/public.cer')
-      .reply(function() {
-        return testPublicKey;
-      });
-    done();
+      .replyWithFile(200, __dirname + '/fixtures/public.der');
   });
 
-  after(function (done) {
-    done();
-  });
-
-  it('should fail to verify apple game center identity if request is failed(timeout)',
-  function (done) {
-    var testToken = {
-      publicKeyUrl: 'https://valid.apple.com/public/timeout.cer',
-      timestamp: 1460981421303,
-      salt: 'saltST==',
-      playerId: 'G:1111111',
-      bundleId: 'com.valid.app'
-    };
-    testToken.signature = calculateSignature(testToken);
-
-    verifier.verify(testToken, function (error, token) {
-      assert.equal(isError(error), true);
-      assert.equal(error.message, 'timeout');
-      assert.equal(token, null);
-      done();
-    });
-  });
+  // TODO timeouts are out of scope for now
+  // xit('should fail to verify apple game center identity if request is failed(timeout)',
+  //   function (done) {
+  //   var testToken = {
+  //     publicKeyUrl: 'https://valid.apple.com/public/timeout.cer',
+  //     timestamp: 1460981421303,
+  //     salt: 'saltST==',
+  //     playerId: 'G:1111111',
+  //     bundleId: 'com.valid.app'
+  //   };
+  //   testToken.signature = calculateSignature(testToken);
+  //
+  //   verifier.verify(testToken, function (error, token) {
+  //     assert(error instanceof verifier.SignatureValidationError);
+  //     assert.equal(error.message, 'timeout');
+  //     assert.equal(token, null);
+  //     done();
+  //   });
+  // });
 
   it('should succeed to verify apple game center identity',
   function (done) {
@@ -91,7 +62,7 @@ describe('verifying gameCenter identity', function () {
     testToken.signature = calculateSignature(testToken);
 
     verifier.verify(testToken, function (error, token) {
-      assert.equal(isError(error), false);
+      assert.equal(error, null);
       assert.equal(token.playerId, testToken.playerId);
       done();
     });
@@ -111,7 +82,7 @@ timestamp high and low bit block is 1',
     testToken.signature = calculateSignature(testToken);
 
     verifier.verify(testToken, function (error, token) {
-      assert.equal(isError(error), false);
+      assert.equal(error, null);
       assert.equal(token.playerId, testToken.playerId);
       done();
     });
@@ -129,8 +100,8 @@ timestamp high and low bit block is 1',
     testToken.signature = calculateSignature(testToken);
 
     verifier.verify(testToken, function (error, token) {
-      assert.equal(isError(error), true);
-      assert.equal(error.message, 'Invalid publicKeyUrl');
+      assert(error instanceof verifier.SignatureValidationError);
+      assert.equal(error.message, 'Invalid publicKeyUrl: should use https');
       assert.equal(token, null);
       done();
     });
@@ -148,8 +119,8 @@ timestamp high and low bit block is 1',
     testToken.signature = calculateSignature(testToken);
 
     verifier.verify(testToken, function (error, token) {
-      assert.equal(isError(error), true);
-      assert.equal(error.message, 'Invalid publicKeyUrl');
+      assert(error instanceof verifier.SignatureValidationError);
+      assert.equal(error.message, 'Invalid publicKeyUrl: host should be apple.com');
       assert.equal(token, null);
       done();
     });
@@ -168,7 +139,7 @@ timestamp high and low bit block is 1',
     testToken.salt = 'NOsalt==';
 
     verifier.verify(testToken, function (error, token) {
-      assert.equal(isError(error), true);
+      assert(error instanceof verifier.SignatureValidationError);
       assert.equal(error.message, 'Invalid Signature');
       assert.equal(token, null);
       done();
