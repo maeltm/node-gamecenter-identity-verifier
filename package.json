@@ -26,10 +26,9 @@
   "homepage": "https://github.com/maeltm/node-gamecenter-identity-verifier#readme",
   "devDependencies": {
     "@types/mocha": "^9.0.0",
-    "@types/node": "^16.11.11",
+    "@types/node": "latest",
     "coveralls": "^2.11.9",
     "istanbul": "^0.4.3",
-    "jshint": "^2.9.1",
     "mocha": "^9.1.3",
     "nock": "^13.2.1"
   }
